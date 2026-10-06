@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="DMX Control">
+  <meta name="theme-color" content="#0f1117">
   <title>AI-Assisted DMX Web Controller</title>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
@@ -215,6 +219,18 @@
             <div class="btn-group">
               <a href="/api/settings/backup" class="btn btn-outline" download>📥 Export JSON Backup</a>
               <button class="btn btn-danger" id="btn-reset-db">Reset Factory Defaults</button>
+            </div>
+          </div>
+
+          <!-- iPad & Remote Control -->
+          <div class="card ipad-card">
+            <div class="ipad-card-header">
+              <h3>📱 Wireless Remote (iPad / Tablet)</h3>
+              <span class="badge badge-success">Wi-Fi Ready</span>
+            </div>
+            <p class="card-desc">Turn your iPad into a touch-enabled wireless lighting desk. No app installation needed—runs directly in Safari with full-screen kiosk support.</p>
+            <div class="btn-group">
+              <button type="button" class="btn btn-primary" id="btn-open-ipad-modal">📱 Connect an iPad?</button>
             </div>
           </div>
         </div>
@@ -463,6 +479,70 @@
       <div class="modal-footer">
         <button class="btn btn-outline" data-close="modal-add-fixture">Cancel</button>
         <button class="btn btn-primary" id="btn-save-manual-fixture">Save Fixture</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Connect an iPad / Tablet -->
+  <div class="modal-overlay hidden" id="modal-connect-ipad">
+    <div class="modal modal-md">
+      <div class="modal-header">
+        <h3>📱 Connect an iPad / Wireless Console</h3>
+        <button class="modal-close" data-close="modal-connect-ipad">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="ipad-intro">
+          Transform your iPad or tablet into a wireless lighting desk. No app download required—runs in Mobile Safari with real-time 40 Hz synchronization!
+        </p>
+
+        <div class="ipad-steps-container">
+          <!-- Step 1 -->
+          <div class="ipad-step-item">
+            <div class="ipad-step-num">1</div>
+            <div class="ipad-step-content">
+              <h4>Connect to the Same Wi-Fi Network</h4>
+              <p>Make sure your iPad is connected to the same local Wi-Fi or router network as this computer.</p>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="ipad-step-item">
+            <div class="ipad-step-num">2</div>
+            <div class="ipad-step-content">
+              <h4>Open Safari on your iPad</h4>
+              <p>Type this address directly into the Safari address bar:</p>
+              <div class="ipad-url-banner">
+                <span id="ipad-primary-url" class="ipad-url-highlight">http://192.168.x.x:8000</span>
+                <button type="button" class="btn btn-sm btn-outline" id="btn-copy-ipad-url" title="Copy URL to clipboard">📋 Copy</button>
+              </div>
+              <div class="detected-ips-subtext" id="detected-ips-subtext"></div>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="ipad-step-item">
+            <div class="ipad-step-num">3</div>
+            <div class="ipad-step-content">
+              <h4>Add to Home Screen (Full Screen Kiosk Mode)</h4>
+              <p class="ipad-highlight-box">
+                💡 <strong>Pro Tip for Live Gigs:</strong> Tap the <strong>Share</strong> button in Safari (square with up arrow) and select <strong>"Add to Home Screen"</strong>. This launches the controller in full-screen standalone mode without Safari's browser bar—turning your iPad into a dedicated touch console!
+              </p>
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="ipad-step-item">
+            <div class="ipad-step-num">4</div>
+            <div class="ipad-step-content">
+              <h4>Linux Mint Firewall (If page doesn't load)</h4>
+              <p>If your iPad cannot reach the server, allow port 8000 through the Linux Mint firewall by running:</p>
+              <pre class="terminal-snippet"><code>sudo ufw allow 8000/tcp</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" data-close="modal-connect-ipad">Done</button>
       </div>
     </div>
   </div>

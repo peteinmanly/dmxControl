@@ -170,4 +170,81 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+
+  // -------------------------------------------------------
+  // iPad Wireless Remote Modal & Network Detection
+  // -------------------------------------------------------
+  const btnOpenIpadModal = document.getElementById("btn-open-ipad-modal");
+  const modalConnectIpad = document.getElementById("modal-connect-ipad");
+  const ipadPrimaryUrl = document.getElementById("ipad-primary-url");
+  const detectedIpsSubtext = document.getElementById("detected-ips-subtext");
+  const btnCopyIpadUrl = document.getElementById("btn-copy-ipad-url");
+
+  if (btnOpenIpadModal && modalConnectIpad) {
+    btnOpenIpadModal.addEventListener("click", async () => {
+      modalConnectIpad.classList.remove("hidden");
+      await updateIpadConnectionInfo();
+    });
+  }
+
+  async function updateIpadConnectionInfo() {
+    try {
+      const data = await API.get("/api/network/info");
+      const currentHost = window.location.hostname;
+      const currentPort = window.location.port || (window.location.protocol === "https:" ? "443" : "80");
+      const port = data.port || currentPort || 8000;
+
+      // Determine best URL to display
+      let displayUrl = `http://${currentHost}:${port}`;
+      if (currentHost === "localhost" || currentHost === "127.0.0.1") {
+        if (data.primary_ip && data.primary_ip !== "127.0.0.1") {
+          displayUrl = `http://${data.primary_ip}:${port}`;
+        }
+      }
+
+      if (ipadPrimaryUrl) {
+        ipadPrimaryUrl.textContent = displayUrl;
+      }
+
+      if (detectedIpsSubtext && data.lan_ips && data.lan_ips.length > 0) {
+        const otherIps = data.lan_ips.filter((ip) => !displayUrl.includes(ip));
+        if (otherIps.length > 0) {
+          detectedIpsSubtext.textContent = `Alternative host network IP(s): ${otherIps.map((ip) => `http://${ip}:${port}`).join(", ")}`;
+        } else {
+          detectedIpsSubtext.textContent = `Local host IP verified on your network adapter.`;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not query network info:", e);
+      if (ipadPrimaryUrl) {
+        ipadPrimaryUrl.textContent = `http://${window.location.hostname || "192.168.1.XX"}:8000`;
+      }
+    }
+  }
+
+  if (btnCopyIpadUrl && ipadPrimaryUrl) {
+    btnCopyIpadUrl.addEventListener("click", async () => {
+      const text = ipadPrimaryUrl.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        btnCopyIpadUrl.textContent = "✅ Copied!";
+        btnCopyIpadUrl.classList.add("btn-success");
+        setTimeout(() => {
+          btnCopyIpadUrl.textContent = "📋 Copy";
+          btnCopyIpadUrl.classList.remove("btn-success");
+        }, 2000);
+      } catch (err) {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        btnCopyIpadUrl.textContent = "✅ Copied!";
+        setTimeout(() => {
+          btnCopyIpadUrl.textContent = "📋 Copy";
+        }, 2000);
+      }
+    });
+  }
 });

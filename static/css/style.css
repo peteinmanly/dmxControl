@@ -1050,3 +1050,132 @@ body {
   from { transform: translateY(-100%); }
   to { transform: translateY(0); }
 }
+
+/* Modal Medium */
+.modal-md {
+  max-width: 620px;
+}
+
+/* iPad Remote Card */
+.ipad-card {
+  border-color: rgba(58, 134, 255, 0.35);
+  box-shadow: 0 4px 18px rgba(58, 134, 255, 0.08);
+}
+
+.ipad-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+/* iPad Modal Styles */
+.ipad-intro {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+
+.ipad-steps-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ipad-step-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.ipad-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  box-shadow: 0 0 10px rgba(58, 134, 255, 0.4);
+}
+
+.ipad-step-content {
+  flex: 1;
+}
+
+.ipad-step-content h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.ipad-step-content p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.ipad-url-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-input);
+  border: 1px solid var(--accent-cyan);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  margin: 10px 0 6px 0;
+  box-shadow: 0 0 12px rgba(0, 210, 255, 0.15);
+}
+
+.ipad-url-highlight {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--accent-cyan);
+  letter-spacing: 0.5px;
+  user-select: all;
+}
+
+.detected-ips-subtext {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ipad-highlight-box {
+  background: rgba(6, 214, 160, 0.08);
+  border-left: 3px solid var(--accent-green);
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 12px !important;
+  color: var(--text-main) !important;
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+.terminal-snippet {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-top: 6px;
+  font-family: monospace;
+  font-size: 13px;
+  color: var(--accent-yellow);
+  overflow-x: auto;
+}
+
+/* Touch & Mobile Responsiveness Optimizations */
+html, body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, .tab-btn, .preset-tile, .script-tile, input[type="range"] {
+  touch-action: manipulation;
+}

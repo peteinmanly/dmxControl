@@ -74,6 +74,17 @@ class TestApiEndpoints(unittest.TestCase):
         self.assertTrue(res_fade.json()["success"])
         self.assertEqual(res_fade.json()["fade_time"], 0.1)
 
+    def test_network_info_api(self):
+        res = self.client.get("/api/network/info")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("lan_ips", data)
+        self.assertIn("primary_ip", data)
+        self.assertIn("port", data)
+        self.assertIn("ipad_url", data)
+        self.assertTrue(isinstance(data["lan_ips"], list))
+        self.assertGreater(len(data["lan_ips"]), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

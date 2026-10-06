@@ -68,9 +68,11 @@ pip install -r requirements.txt
 
 ### 4. Launch Application
 ```bash
+./run.sh
+# Or alternatively:
 python3 -m uvicorn app:app --host 0.0.0.0 --port 8000
 ```
-Open your browser at **`http://localhost:8000`**.
+Open your browser at **`http://localhost:8000`** (or connect from an iPad on your Wi-Fi via `http://<your-lan-ip>:8000`).
 
 ---
 
@@ -147,6 +149,12 @@ Open your browser at **`http://localhost:8000`**.
 - **Grand Master Intensity Fader**: Dedicated hardware-grade master fader (0–100%) in the top header. Proportionally scales all 512 DMX channel levels at 40 Hz without altering stored preset values or base fixture states.
 - **Preset Smooth Crossfades**: Switch between static color washes and scenes with smooth linear interpolation over selectable fade times (**Cut**, **1s**, **2s**, **3s**, **5s**) running at 40 Hz.
 - **Script Speed Multiplier & Tap Tempo**: Real-time tempo synchronization (0.25x to 4.0x) for looping procedural show routines. Features an interactive **🥁 Tap Tempo** button calculating live BPM (40–240 BPM) to sync looping color fades and chases to live musical performance on the fly.
+
+### 8. Wireless iPad & Mobile Remote Control
+- **Zero-Install Touch Console**: Connect any iPad, iPhone, or tablet on your local Wi-Fi to `http://<host-ip>:8000`.
+- **Integrated Guidance Modal**: In the **Settings & Diagnostics** tab, click **"📱 Connect an iPad?"** to see auto-detected host network IP addresses, a 1-click clipboard copy button, and step-by-step setup instructions.
+- **Full-Screen Kiosk Mode**: In Safari on iPad, choose **"Add to Home Screen"** to hide browser toolbars and run the application as a standalone, zero-latency wireless lighting desk.
+- **Firewall Quick-Fix**: Built-in instructions for Linux Mint (`sudo ufw allow 8000/tcp`) if local network firewall rules require configuration.
 
 ---
 

@@ -5,6 +5,9 @@ Provides REST APIs, WebSockets for 40 Hz universe diagnostics, and static web UI
 
 import asyncio
 import json
+import re
+import socket
+import subprocess
 from contextlib import asynccontextmanager
 from typing import Dict, Any, Optional, List
 
@@ -478,6 +481,74 @@ def reset_database():
     db = get_db()
     db.reset_factory_defaults()
     return {"success": True, "message": "Database reset to factory defaults with sample fixtures and presets."}
+
+
+# ---------------------------------------------------------
+# Network & iPad Remote Connection Endpoints
+# ---------------------------------------------------------
+def get_host_network_ips() -> List[str]:
+    """Detects active non-loopback LAN IP addresses of the host machine."""
+    ips = set()
+    # 1. UDP probe (no packets actually sent)
+    s = None
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        if ip and not ip.startswith("127."):
+            ips.add(ip)
+    except Exception:
+        pass
+    finally:
+        if s is not None:
+            try:
+                s.close()
+            except Exception:
+                pass
+
+    # 2. Linux hostname -I
+    try:
+        out = subprocess.check_output(["hostname", "-I"], text=True, stderr=subprocess.DEVNULL)
+        for part in out.strip().split():
+            if ":" not in part and not part.startswith("127."):
+                ips.add(part)
+    except Exception:
+        pass
+
+    # 3. Ifconfig parse (macOS & Linux fallback)
+    try:
+        out = subprocess.check_output(["ifconfig"], text=True, stderr=subprocess.DEVNULL)
+        found = re.findall(r"inet (?:addr:)?([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)", out)
+        for ip in found:
+            if not ip.startswith("127."):
+                ips.add(ip)
+    except Exception:
+        pass
+
+    # 4. Hostname lookup fallback
+    try:
+        host = socket.gethostname()
+        for ip in socket.gethostbyname_ex(host)[2]:
+            if not ip.startswith("127."):
+                ips.add(ip)
+    except Exception:
+        pass
+
+    sorted_ips = sorted(list(ips))
+    return sorted_ips if sorted_ips else ["127.0.0.1"]
+
+
+@app.get("/api/network/info")
+def get_network_info():
+    ips = get_host_network_ips()
+    port = config.SERVER_PORT
+    primary_ip = ips[0] if ips else "127.0.0.1"
+    return {
+        "lan_ips": ips,
+        "primary_ip": primary_ip,
+        "port": port,
+        "ipad_url": f"http://{primary_ip}:{port}",
+    }
 
 
 # ---------------------------------------------------------
