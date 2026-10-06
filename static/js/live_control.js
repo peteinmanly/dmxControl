@@ -23,15 +23,57 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnTestAiShow = document.getElementById("btn-test-ai-show");
   const btnSaveAiShow = document.getElementById("btn-save-ai-show");
 
+  // Grand Master & Tempo Elements
+  const grandMasterSlider = document.getElementById("grand-master-slider");
+  const grandMasterPct = document.getElementById("grand-master-pct");
+  const scriptSpeedSlider = document.getElementById("script-speed-slider");
+  const scriptSpeedPct = document.getElementById("script-speed-pct");
+  const btnTapTempo = document.getElementById("btn-tap-tempo");
+  const tapTempoBpm = document.getElementById("tap-tempo-bpm");
+
   // Build Partition Matrix Grid (512 blocks)
   buildPartitionMatrix();
 
-  // Load Initial Data
+  // Load Initial Data & Controls
   loadPresets();
   loadScripts();
+  initGrandMaster();
+  initSpeedAndTapTempo();
 
   // -------------------------------------------------------
-  // Presets Management
+  // Grand Master Intensity Fader
+  // -------------------------------------------------------
+  let gmDebounceTimer = null;
+  function initGrandMaster() {
+    if (!grandMasterSlider) return;
+
+    // Fetch initial level
+    API.get("/api/master/grand_master")
+      .then((data) => {
+        if (data && data.percent !== undefined) {
+          grandMasterSlider.value = data.percent;
+          if (grandMasterPct) grandMasterPct.textContent = `${data.percent}%`;
+        }
+      })
+      .catch((err) => console.error("Could not fetch grand master:", err));
+
+    grandMasterSlider.addEventListener("input", (e) => {
+      const pct = parseInt(e.target.value, 10);
+      if (grandMasterPct) grandMasterPct.textContent = `${pct}%`;
+
+      clearTimeout(gmDebounceTimer);
+      gmDebounceTimer = setTimeout(async () => {
+        try {
+          await API.post("/api/master/grand_master", { percent: pct });
+        } catch (err) {
+          console.error("Failed to set grand master:", err);
+        }
+      }, 30);
+    });
+  }
+
+  // -------------------------------------------------------
+  // Presets Management (With Crossfade Transition)
   // -------------------------------------------------------
   async function loadPresets() {
     if (!presetGrid) return;
@@ -64,7 +106,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       tile.addEventListener("click", async () => {
         try {
-          await API.post(`/api/presets/${p.id}/trigger`);
+          const fadeSelect = document.getElementById("preset-fade-select");
+          const fadeTime = fadeSelect ? parseFloat(fadeSelect.value) : 0.0;
+          await API.post(`/api/presets/${p.id}/trigger`, { fade_time: fadeTime });
           document.querySelectorAll(".preset-tile").forEach((t) => t.classList.remove("active-preset"));
           tile.classList.add("active-preset");
         } catch (err) {
@@ -138,6 +182,81 @@ document.addEventListener("DOMContentLoaded", () => {
 
       scriptGrid.appendChild(tile);
     });
+  }
+
+  // -------------------------------------------------------
+  // Procedural Script Speed & Tap Tempo Management
+  // -------------------------------------------------------
+  let speedDebounceTimer = null;
+  let tapTimes = [];
+
+  function initSpeedAndTapTempo() {
+    if (!scriptSpeedSlider) return;
+
+    // Fetch initial speed
+    API.get("/api/scripts/speed")
+      .then((data) => {
+        if (data && data.multiplier !== undefined) {
+          const mult = parseFloat(data.multiplier);
+          scriptSpeedSlider.value = mult;
+          if (scriptSpeedPct) scriptSpeedPct.textContent = `${mult.toFixed(2)}x`;
+          const bpm = Math.round(mult * 120);
+          if (tapTempoBpm) tapTempoBpm.textContent = `${bpm} BPM`;
+        }
+      })
+      .catch((err) => console.error("Could not fetch script speed:", err));
+
+    scriptSpeedSlider.addEventListener("input", (e) => {
+      const mult = parseFloat(e.target.value);
+      if (scriptSpeedPct) scriptSpeedPct.textContent = `${mult.toFixed(2)}x`;
+      const bpm = Math.round(mult * 120);
+      if (tapTempoBpm) tapTempoBpm.textContent = `${bpm} BPM`;
+
+      clearTimeout(speedDebounceTimer);
+      speedDebounceTimer = setTimeout(async () => {
+        try {
+          await API.post("/api/scripts/speed", { multiplier: mult });
+        } catch (err) {
+          console.error("Failed to update speed:", err);
+        }
+      }, 50);
+    });
+
+    if (btnTapTempo) {
+      btnTapTempo.addEventListener("click", async () => {
+        const now = performance.now();
+        if (tapTimes.length > 0 && now - tapTimes[tapTimes.length - 1] > 2500) {
+          tapTimes = [];
+        }
+        tapTimes.push(now);
+        if (tapTimes.length > 6) tapTimes.shift();
+
+        // Visual bounce animation
+        btnTapTempo.classList.add("tapped");
+        setTimeout(() => btnTapTempo.classList.remove("tapped"), 120);
+
+        if (tapTimes.length >= 2) {
+          const intervals = [];
+          for (let i = 1; i < tapTimes.length; i++) {
+            intervals.push(tapTimes[i] - tapTimes[i - 1]);
+          }
+          const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+          const rawBpm = Math.round(60000 / avgInterval);
+          const clampedBpm = Math.max(40, Math.min(240, rawBpm));
+          const multiplier = Math.max(0.25, Math.min(4.0, Math.round((clampedBpm / 120.0) * 20) / 20));
+
+          if (tapTempoBpm) tapTempoBpm.textContent = `${clampedBpm} BPM`;
+          if (scriptSpeedSlider) scriptSpeedSlider.value = multiplier;
+          if (scriptSpeedPct) scriptSpeedPct.textContent = `${multiplier.toFixed(2)}x`;
+
+          try {
+            await API.post("/api/scripts/speed", { multiplier });
+          } catch (err) {
+            console.error("Failed to sync tempo speed:", err);
+          }
+        }
+      });
+    }
   }
 
   // -------------------------------------------------------

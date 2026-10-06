@@ -157,16 +157,27 @@ async def create_preset(request: Request):
 
 
 @app.post("/api/presets/{preset_id}/trigger")
-def trigger_preset(preset_id: int):
+async def trigger_preset(preset_id: int, request: Request):
     repo = PresetRepository()
     preset = repo.get_by_id(preset_id)
     if not preset:
         raise HTTPException(status_code=404, detail="Preset not found")
 
+    fade_time = 0.0
+    try:
+        body = await request.json()
+        fade_time = float(body.get("fade_time", 0.0))
+    except Exception:
+        pass
+
     mixer = get_mixer()
     owner_tag = f"Preset:{preset_id}"
-    updated = mixer.set_channels(preset["channel_payload"], owner=owner_tag)
-    return {"success": True, "preset_id": preset_id, "channels_updated": updated}
+    if fade_time > 0.05:
+        mixer.fade_to_channels(preset["channel_payload"], duration_sec=fade_time, owner=owner_tag)
+        return {"success": True, "preset_id": preset_id, "fade_time": fade_time}
+    else:
+        updated = mixer.set_channels(preset["channel_payload"], owner=owner_tag)
+        return {"success": True, "preset_id": preset_id, "channels_updated": updated, "fade_time": 0.0}
 
 
 @app.delete("/api/presets/{preset_id}")
@@ -176,6 +187,28 @@ def delete_preset(preset_id: int):
     if not ok:
         raise HTTPException(status_code=404, detail="Preset not found")
     return {"success": True}
+
+
+# ---------------------------------------------------------
+# Grand Master Intensity Fader Endpoints
+# ---------------------------------------------------------
+@app.get("/api/master/grand_master")
+def get_grand_master():
+    mixer = get_mixer()
+    level = mixer.get_grand_master()
+    return {"level": level, "percent": int(round(level * 100))}
+
+
+@app.post("/api/master/grand_master")
+async def set_grand_master(request: Request):
+    data = await request.json()
+    mixer = get_mixer()
+    if "percent" in data:
+        level = float(data["percent"]) / 100.0
+    else:
+        level = float(data.get("level", 1.0))
+    applied = mixer.set_grand_master(level)
+    return {"success": True, "level": applied, "percent": int(round(applied * 100))}
 
 
 # ---------------------------------------------------------
@@ -252,6 +285,21 @@ def delete_script(script_id: int):
 def get_running_scripts():
     runner = get_script_runner()
     return {"active_scripts": runner.get_active_scripts()}
+
+
+@app.get("/api/scripts/speed")
+def get_script_speed():
+    runner = get_script_runner()
+    return {"multiplier": runner.get_speed_multiplier()}
+
+
+@app.post("/api/scripts/speed")
+async def set_script_speed(request: Request):
+    data = await request.json()
+    multiplier = float(data.get("multiplier", 1.0))
+    runner = get_script_runner()
+    applied = runner.set_speed_multiplier(multiplier)
+    return {"success": True, "multiplier": applied}
 
 
 # ---------------------------------------------------------

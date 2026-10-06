@@ -25,6 +25,14 @@
     </div>
 
     <div class="header-right">
+      <!-- Grand Master Intensity Fader -->
+      <div class="grand-master-pill" title="Grand Master Intensity Scaling (0-100%)">
+        <span class="gm-icon">🎚️</span>
+        <label for="grand-master-slider" class="gm-title">MASTER</label>
+        <input type="range" id="grand-master-slider" min="0" max="100" value="100" step="1" aria-label="Grand Master">
+        <span class="gm-pct" id="grand-master-pct">100%</span>
+      </div>
+
       <!-- Hardware Status Badge -->
       <div class="status-pill" id="hw-status-badge" title="DMX Hardware Driver Status">
         <span class="indicator-dot dot-yellow"></span>
@@ -70,8 +78,21 @@
         <!-- Presets Column -->
         <div class="panel">
           <div class="panel-header">
-            <h2>Static Presets</h2>
+            <div>
+              <h2>Static Presets</h2>
+              <span class="subtext">Instant or smooth crossfades</span>
+            </div>
             <div class="panel-actions">
+              <div class="preset-fade-selector" title="Crossfade transition time for presets">
+                <label for="preset-fade-select">Fade:</label>
+                <select id="preset-fade-select" class="select-compact">
+                  <option value="0">Cut (0s)</option>
+                  <option value="1">1.0s</option>
+                  <option value="2" selected>2.0s</option>
+                  <option value="3">3.0s</option>
+                  <option value="5">5.0s</option>
+                </select>
+              </div>
               <button class="btn btn-sm btn-primary" id="btn-new-preset">+ New Preset</button>
             </div>
           </div>
@@ -83,8 +104,20 @@
         <!-- Active Procedural Show Scripts Column -->
         <div class="panel">
           <div class="panel-header">
-            <h2>Show Scripts (Procedural Routines)</h2>
+            <div>
+              <h2>Show Scripts</h2>
+              <span class="subtext">Procedural & looping FX</span>
+            </div>
             <div class="panel-actions">
+              <div class="script-tempo-bar" title="Real-time procedural script speed & tempo sync">
+                <span class="tempo-label">Speed:</span>
+                <input type="range" id="script-speed-slider" min="0.25" max="4.0" step="0.05" value="1.0" class="speed-slider" aria-label="Speed Multiplier">
+                <span id="script-speed-pct" class="speed-display">1.00x</span>
+                <button type="button" class="btn-tap-tempo" id="btn-tap-tempo" title="Tap rhythmically to sync tempo">
+                  🥁 TAP
+                </button>
+                <span id="tap-tempo-bpm" class="bpm-display">120 BPM</span>
+              </div>
               <button class="btn btn-sm btn-ai" id="btn-open-ai-show-modal">✨ AI Show Generator</button>
             </div>
           </div>

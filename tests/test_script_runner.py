@@ -99,6 +99,36 @@ while not stop_event.is_set():
         self.assertFalse(self.runner.is_running(101))
         self.assertFalse(self.runner.is_running(102))
 
+    def test_speed_multiplier_controls_and_scaling(self):
+        # Default is 1.0
+        self.assertEqual(self.runner.get_speed_multiplier(), 1.0)
+
+        # Setting and clamping
+        self.assertEqual(self.runner.set_speed_multiplier(2.5), 2.5)
+        self.assertEqual(self.runner.get_speed_multiplier(), 2.5)
+        self.assertEqual(self.runner.set_speed_multiplier(10.0), 5.0)  # max clamp
+        self.assertEqual(self.runner.set_speed_multiplier(0.01), 0.1)  # min clamp
+
+        # Restore to 2.0x and verify fast looping
+        self.runner.set_speed_multiplier(4.0)
+        code = """
+import time
+counter = 0
+while not stop_event.is_set():
+    counter += 1
+    dmx.set(1, min(255, counter))
+    time.sleep(0.04)
+"""
+        res = self.runner.start_script(201, "Speed Test", [1], code)
+        self.assertTrue(res["success"])
+
+        # With 4.0x speed, each 0.04s sleep takes only ~0.01s.
+        # In 0.08s, it will execute ~6-8 iterations instead of 2.
+        time.sleep(0.08)
+        val = self.mixer.get_channel(1)
+        self.assertGreaterEqual(val, 4)
+        self.runner.stop_script(201)
+
 
 if __name__ == "__main__":
     unittest.main()

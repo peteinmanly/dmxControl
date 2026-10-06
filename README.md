@@ -143,6 +143,11 @@ Open your browser at **`http://localhost:8000`**.
 - Prompt Gemini to generate complex animated lighting routines (e.g. *"Create an undulating ocean wave chase across front wash fixtures"*).
 - Validated via Python Abstract Syntax Tree (AST) analysis: restricts code to math, time, and scoped DMX commands; forbids unauthorized imports, file I/O, and shell execution.
 
+### 7. Live Busking Performance Controls
+- **Grand Master Intensity Fader**: Dedicated hardware-grade master fader (0–100%) in the top header. Proportionally scales all 512 DMX channel levels at 40 Hz without altering stored preset values or base fixture states.
+- **Preset Smooth Crossfades**: Switch between static color washes and scenes with smooth linear interpolation over selectable fade times (**Cut**, **1s**, **2s**, **3s**, **5s**) running at 40 Hz.
+- **Script Speed Multiplier & Tap Tempo**: Real-time tempo synchronization (0.25x to 4.0x) for looping procedural show routines. Features an interactive **🥁 Tap Tempo** button calculating live BPM (40–240 BPM) to sync looping color fades and chases to live musical performance on the fly.
+
 ---
 
 ## 🛠️ Configuration & Gemini API

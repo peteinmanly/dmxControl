@@ -51,6 +51,63 @@ class TestDMXMixer(unittest.TestCase):
         ownership = self.mixer.get_channel_ownership()
         self.assertTrue(all(o is None for o in ownership))
 
+    def test_grand_master_scaling(self):
+        self.mixer.set_channels({1: 200, 2: 100, 3: 50})
+        self.assertEqual(self.mixer.get_channel(1, scaled=False), 200)
+
+        # Scale to 50%
+        applied = self.mixer.set_grand_master(0.5)
+        self.assertEqual(applied, 0.5)
+        self.assertEqual(self.mixer.get_grand_master(), 0.5)
+
+        # Scaled get_channel
+        self.assertEqual(self.mixer.get_channel(1, scaled=True), 100)
+        self.assertEqual(self.mixer.get_channel(2, scaled=True), 50)
+        self.assertEqual(self.mixer.get_channel(3, scaled=True), 25)
+
+        # Frame should reflect 50% scaling
+        frame = self.mixer.get_frame()
+        self.assertEqual(frame[0], 100)
+        self.assertEqual(frame[1], 50)
+        self.assertEqual(frame[2], 25)
+
+        # Universe state should reflect grand_master
+        state = self.mixer.get_universe_state()
+        self.assertEqual(state["grand_master"], 0.5)
+        self.assertEqual(state["channels"][0], 100)
+
+        # Scale to 0%
+        self.mixer.set_grand_master(0.0)
+        frame_zero = self.mixer.get_frame()
+        self.assertTrue(all(b == 0 for b in frame_zero))
+        # Base buffer unchanged
+        self.assertEqual(self.mixer.get_channel(1, scaled=False), 200)
+
+        # Restore to 100%
+        self.mixer.set_grand_master(1.0)
+        self.assertEqual(self.mixer.get_channel(1, scaled=True), 200)
+
+    def test_smooth_crossfade(self):
+        import time
+        self.mixer.set_channels({1: 0, 2: 100})
+        self.mixer.fade_to_channels({1: 200, 2: 0}, duration_sec=0.1, owner="Preset:5")
+
+        ownership = self.mixer.get_channel_ownership()
+        self.assertEqual(ownership[0], "Preset:5")
+        self.assertEqual(ownership[1], "Preset:5")
+
+        time.sleep(0.18)
+        self.assertEqual(self.mixer.get_channel(1), 200)
+        self.assertEqual(self.mixer.get_channel(2), 0)
+
+    def test_blackout_cancels_active_crossfade(self):
+        import time
+        self.mixer.fade_to_channels({1: 255}, duration_sec=1.0)
+        time.sleep(0.04)
+        self.mixer.blackout()
+        time.sleep(0.08)
+        self.assertEqual(self.mixer.get_channel(1), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

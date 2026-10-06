@@ -45,6 +45,37 @@ class ScriptDMXHelper:
         return self._mixer.get_channel(channel)
 
 
+class ScriptTimeProxy:
+    """
+    Proxies the standard time module inside show scripts.
+    Dynamically scales sleep durations using ScriptRunner.get_speed_multiplier()
+    and responds immediately to stop_event.
+    """
+
+    def __init__(self, runner: "ScriptRunner", stop_event: threading.Event):
+        self._runner = runner
+        self._stop_event = stop_event
+
+    def sleep(self, seconds: float) -> None:
+        mult = self._runner.get_speed_multiplier()
+        effective_mult = max(0.05, mult)
+        scaled_duration = max(0.001, float(seconds) / effective_mult)
+        end_time = time.time() + scaled_duration
+
+        # Slice sleep into 20ms chunks for rapid abort responsiveness
+        while not self._stop_event.is_set():
+            remaining = end_time - time.time()
+            if remaining <= 0:
+                break
+            time.sleep(min(0.02, remaining))
+
+    def time(self) -> float:
+        return time.time()
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(time, name)
+
+
 class ScriptExecutionHandle:
     def __init__(
         self,
@@ -73,7 +104,20 @@ class ScriptRunner:
     def __init__(self, mixer: Optional[DMXMixer] = None):
         self.mixer = mixer or get_mixer()
         self._active_scripts: Dict[int, ScriptExecutionHandle] = {}
+        self._speed_multiplier: float = 1.0  # Dynamic speed multiplier (0.1x to 5.0x)
         self._lock = threading.Lock()
+
+    def set_speed_multiplier(self, multiplier: float) -> float:
+        """Sets global speed multiplier (clamped to 0.1x - 5.0x)."""
+        clamped = max(0.1, min(5.0, float(multiplier)))
+        with self._lock:
+            self._speed_multiplier = clamped
+        return clamped
+
+    def get_speed_multiplier(self) -> float:
+        """Returns the current global speed multiplier."""
+        with self._lock:
+            return self._speed_multiplier
 
     def start_script(
         self,
@@ -118,9 +162,12 @@ class ScriptRunner:
         # 3. Create execution thread for new script
         stop_event = threading.Event()
         owner_tag = f"Script:{script_id}"
+        time_proxy = ScriptTimeProxy(self, stop_event)
 
         def _safe_import(name, *args, **kwargs):
-            if name in ("math", "time", "random"):
+            if name == "time":
+                return time_proxy
+            if name in ("math", "random"):
                 return __import__(name, *args, **kwargs)
             raise ImportError(f"Importing '{name}' is prohibited in show scripts.")
 
@@ -151,7 +198,7 @@ class ScriptRunner:
                     },
                     "dmx": helper,
                     "stop_event": stop_event,
-                    "time": time,
+                    "time": time_proxy,
                     "math": math,
                     "random": random,
                 }

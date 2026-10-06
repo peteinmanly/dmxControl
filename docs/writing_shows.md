@@ -7,7 +7,7 @@ Every script runs in an isolated worker thread with injected helper objects:
 - `dmx.set(channel: int, value: int)`: Sets channel level (0-255). Restricted to the script's registered footprint.
 - `dmx.get(channel: int) -> int`: Reads current channel level.
 - `stop_event`: A `threading.Event` instance. Your loop MUST check `while not stop_event.is_set():`.
-- `time`: Use `time.sleep(0.025 to 0.05)` to yield control and pace animation between 20 and 40 FPS.
+- `time`: Standard time functions (`time.time()`, `time.sleep()`). The `time.sleep(dt)` call is dynamically scaled by the global Speed Multiplier (0.25x to 4.0x) and Tap Tempo controls, allowing live beat synchronization without modifying script source code.
 - `math`: Standard math library (`sin`, `cos`, `radians`, `pi`, etc.).
 - `random`: Random number generators.
 
