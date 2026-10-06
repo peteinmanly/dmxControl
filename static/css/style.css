@@ -517,6 +517,160 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
 }
 
+/* =========================================================
+   Pure Fullscreen Busking Display Modes
+   Hides navbar, toolbar, matrix & shows only the selected panel + master fader
+   ========================================================= */
+body.fullscreen-presets-active .app-header,
+body.fullscreen-presets-active .health-banner,
+body.fullscreen-presets-active .live-view-toolbar,
+body.fullscreen-presets-active #panel-matrix,
+body.fullscreen-presets-active #panel-scripts {
+  display: none !important;
+}
+
+body.fullscreen-presets-active,
+body.fullscreen-scripts-active {
+  overflow: hidden;
+}
+
+body.fullscreen-presets-active .main-container {
+  padding: 10px 14px !important;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+body.fullscreen-presets-active #live-tab,
+body.fullscreen-presets-active .live-workspace-wrapper {
+  height: 100%;
+}
+
+body.fullscreen-presets-active .live-main-content {
+  height: 100%;
+}
+
+body.fullscreen-presets-active .live-grid {
+  grid-template-columns: 1fr !important;
+  height: 100%;
+  margin-bottom: 0 !important;
+}
+
+body.fullscreen-presets-active #panel-presets {
+  margin-bottom: 0 !important;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 18px;
+}
+
+body.fullscreen-presets-active #panel-presets .panel-header {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  flex-shrink: 0;
+}
+
+body.fullscreen-presets-active #panel-presets .preset-grid {
+  flex: 1;
+  overflow-y: auto;
+  align-content: start;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
+  gap: 16px;
+  padding-right: 4px;
+}
+
+body.fullscreen-presets-active .preset-tile {
+  min-height: 110px;
+  padding: 18px;
+}
+
+body.fullscreen-presets-active .preset-tile .preset-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+body.fullscreen-presets-active .preset-tile .preset-desc {
+  font-size: 13px;
+}
+
+body.fullscreen-presets-active .master-fader-strip {
+  height: 100% !important;
+  min-height: 0 !important;
+  top: 0 !important;
+}
+
+/* Pure Fullscreen: Scripts Only */
+body.fullscreen-scripts-active .app-header,
+body.fullscreen-scripts-active .health-banner,
+body.fullscreen-scripts-active .live-view-toolbar,
+body.fullscreen-scripts-active #panel-matrix,
+body.fullscreen-scripts-active #panel-presets {
+  display: none !important;
+}
+
+body.fullscreen-scripts-active .main-container {
+  padding: 10px 14px !important;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+body.fullscreen-scripts-active #live-tab,
+body.fullscreen-scripts-active .live-workspace-wrapper {
+  height: 100%;
+}
+
+body.fullscreen-scripts-active .live-main-content {
+  height: 100%;
+}
+
+body.fullscreen-scripts-active .live-grid {
+  grid-template-columns: 1fr !important;
+  height: 100%;
+  margin-bottom: 0 !important;
+}
+
+body.fullscreen-scripts-active #panel-scripts {
+  margin-bottom: 0 !important;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 18px;
+}
+
+body.fullscreen-scripts-active #panel-scripts .panel-header {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  flex-shrink: 0;
+}
+
+body.fullscreen-scripts-active #panel-scripts .script-grid {
+  flex: 1;
+  overflow-y: auto;
+  align-content: start;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important;
+  gap: 16px;
+  padding-right: 4px;
+}
+
+body.fullscreen-scripts-active .master-fader-strip {
+  height: 100% !important;
+  min-height: 0 !important;
+  top: 0 !important;
+}
+
+/* Exit Fullscreen Button Accent */
+.btn-exit-fullscreen {
+  background: rgba(0, 210, 255, 0.18) !important;
+  border-color: var(--accent-cyan) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 12px rgba(0, 210, 255, 0.3) !important;
+}
+
+.btn-exit-fullscreen:hover {
+  background: var(--accent-cyan) !important;
+  color: #0f1117 !important;
+}
+
 /* Full-Length Vertical Grand Master Strip (Right-Hand Side) */
 .master-fader-strip {
   width: 96px;

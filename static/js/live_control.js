@@ -79,17 +79,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnTogglePresetsFullscreen) {
       btnTogglePresetsFullscreen.addEventListener("click", () => {
-        const isAlreadyPresetsOnly = liveGrid.classList.contains("view-presets-only");
+        const isAlreadyPresetsOnly =
+          document.body.classList.contains("fullscreen-presets-active") ||
+          liveGrid.classList.contains("view-presets-only");
         applyLiveViewMode(isAlreadyPresetsOnly ? "split" : "presets", true);
       });
     }
 
     if (btnToggleScriptsFullscreen) {
       btnToggleScriptsFullscreen.addEventListener("click", () => {
-        const isAlreadyScriptsOnly = liveGrid.classList.contains("view-scripts-only");
+        const isAlreadyScriptsOnly =
+          document.body.classList.contains("fullscreen-scripts-active") ||
+          liveGrid.classList.contains("view-scripts-only");
         applyLiveViewMode(isAlreadyScriptsOnly ? "split" : "scripts", true);
       });
     }
+
+    // Allow user to press Escape to exit fullscreen mode at any time
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (
+          document.body.classList.contains("fullscreen-presets-active") ||
+          document.body.classList.contains("fullscreen-scripts-active")
+        ) {
+          applyLiveViewMode("split", true);
+        }
+      }
+    });
   }
 
   function applyLiveViewMode(mode, save = true) {
@@ -97,24 +113,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
     [viewBtnSplit, viewBtnPresets, viewBtnScripts].forEach((b) => b && b.classList.remove("active"));
     liveGrid.classList.remove("view-presets-only", "view-scripts-only");
+    document.body.classList.remove("fullscreen-presets-active", "fullscreen-scripts-active");
+
+    if (btnTogglePresetsFullscreen) {
+      btnTogglePresetsFullscreen.classList.remove("btn-exit-fullscreen");
+      btnTogglePresetsFullscreen.textContent = "⛶ Fullscreen";
+    }
+    if (btnToggleScriptsFullscreen) {
+      btnToggleScriptsFullscreen.classList.remove("btn-exit-fullscreen");
+      btnToggleScriptsFullscreen.textContent = "⛶ Fullscreen";
+    }
 
     if (mode === "presets") {
       liveGrid.classList.add("view-presets-only");
+      document.body.classList.add("fullscreen-presets-active");
       if (viewBtnPresets) viewBtnPresets.classList.add("active");
-      if (btnTogglePresetsFullscreen) btnTogglePresetsFullscreen.textContent = "⤺ Split View";
-      if (btnToggleScriptsFullscreen) btnToggleScriptsFullscreen.textContent = "⛶ Fullscreen";
+      if (btnTogglePresetsFullscreen) {
+        btnTogglePresetsFullscreen.classList.add("btn-exit-fullscreen");
+        btnTogglePresetsFullscreen.textContent = "⤺ Exit Fullscreen";
+      }
       if (viewModeHint) viewModeHint.innerHTML = "<span>Presets Fullscreen Mode (Master fader on right)</span>";
     } else if (mode === "scripts") {
       liveGrid.classList.add("view-scripts-only");
+      document.body.classList.add("fullscreen-scripts-active");
       if (viewBtnScripts) viewBtnScripts.classList.add("active");
-      if (btnToggleScriptsFullscreen) btnToggleScriptsFullscreen.textContent = "⤺ Split View";
-      if (btnTogglePresetsFullscreen) btnTogglePresetsFullscreen.textContent = "⛶ Fullscreen";
+      if (btnToggleScriptsFullscreen) {
+        btnToggleScriptsFullscreen.classList.add("btn-exit-fullscreen");
+        btnToggleScriptsFullscreen.textContent = "⤺ Exit Fullscreen";
+      }
       if (viewModeHint) viewModeHint.innerHTML = "<span>Scripts Fullscreen Mode (Master fader on right)</span>";
     } else {
       mode = "split";
       if (viewBtnSplit) viewBtnSplit.classList.add("active");
-      if (btnTogglePresetsFullscreen) btnTogglePresetsFullscreen.textContent = "⛶ Fullscreen";
-      if (btnToggleScriptsFullscreen) btnToggleScriptsFullscreen.textContent = "⛶ Fullscreen";
       if (viewModeHint) viewModeHint.innerHTML = "<span>Showing Presets & Scripts side-by-side</span>";
     }
 
