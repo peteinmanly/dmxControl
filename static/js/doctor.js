@@ -29,15 +29,22 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderHealthBadge(data) {
     if (!healthText || !healthDot) return;
 
-    healthText.textContent = data.status;
-
-    if (data.status === "HEALTHY") {
+    if (data.status === "DISCONNECTED") {
+      healthText.textContent = "DISCONNECTED";
+      healthDot.className = "indicator-dot dot-yellow";
+      if (healthBadge) healthBadge.title = "No physical DMX interface connected (Virtual simulation mode)";
+      if (banner) banner.classList.add("hidden");
+    } else if (data.status === "HEALTHY") {
+      healthText.textContent = "HEALTHY";
       healthDot.className = "indicator-dot dot-green";
+      if (healthBadge) healthBadge.title = "DMX Hardware & Subsystems Healthy";
       if (banner) banner.classList.add("hidden");
     } else if (data.status === "DEGRADED") {
+      healthText.textContent = "DEGRADED";
       healthDot.className = "indicator-dot dot-yellow";
       showBanner(data.issues[0] || "System running in degraded mode.");
     } else {
+      healthText.textContent = "CRITICAL";
       healthDot.className = "indicator-dot dot-red";
       showBanner(data.issues[0] || "Critical hardware or system error detected.");
     }

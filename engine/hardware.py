@@ -48,35 +48,40 @@ class VirtualDMXDriver(BaseDMXDriver):
     """Software-only dummy driver for development, unit testing, and offline busking."""
 
     def __init__(self):
-        self._connected = False
+        self._active = False
         self._frames_sent = 0
         self._last_send_time = 0.0
 
     def open(self) -> bool:
-        self._connected = True
+        self._active = True
         return True
 
     def close(self) -> None:
-        self._connected = False
+        self._active = False
 
     def send_frame(self, frame: bytes) -> bool:
-        if not self._connected:
+        if not self._active:
             return False
         self._frames_sent += 1
         self._last_send_time = time.time()
         return True
 
     def is_connected(self) -> bool:
-        return self._connected
+        # Virtual simulation mode: No physical DMX hardware interface connected
+        return False
+
+    def is_active(self) -> bool:
+        return self._active
 
     def get_diagnostics(self) -> Dict[str, Any]:
         return {
             "driver_name": "Virtual / Dummy DMX",
-            "connected": self._connected,
+            "connected": False,
+            "physical_connected": False,
             "port": "Virtual (In-Memory)",
             "frames_sent": self._frames_sent,
             "last_send_timestamp": self._last_send_time,
-            "status": "active" if self._connected else "stopped",
+            "status": "simulation" if self._active else "stopped",
             "hardware_notes": "Simulation mode. No physical lights connected.",
         }
 
@@ -239,7 +244,7 @@ class DMXHardwareDaemon:
         self._running = False
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self.total_cycles = 0
 
         self.set_driver(self.driver_type)
@@ -328,15 +333,23 @@ class DMXHardwareDaemon:
             if sleep_time > 0.001:
                 time.sleep(sleep_time)
 
+    def is_hardware_connected(self) -> bool:
+        with self._lock:
+            if isinstance(self.driver, EnttecOpenDMXDriver):
+                return self.driver.is_connected()
+            return False
+
     def get_status(self) -> Dict[str, Any]:
         with self._lock:
             diag = self.driver.get_diagnostics() if self.driver else {}
+            hw_conn = isinstance(self.driver, EnttecOpenDMXDriver) and self.driver.is_connected()
             return {
                 "running": self._running,
                 "target_fps": self.target_fps,
                 "actual_fps": self.actual_fps,
                 "total_cycles": self.total_cycles,
                 "driver_mode": self.driver_type,
+                "hardware_connected": hw_conn,
                 "driver_diagnostics": diag,
             }
 

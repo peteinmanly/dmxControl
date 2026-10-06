@@ -155,8 +155,9 @@ class AIDoctor:
             })
 
         hw_status = telemetry["hardware_daemon"]
+        is_hw_connected = hw_status.get("hardware_connected", False)
         driver_diag = hw_status.get("driver_diagnostics", {})
-        if hw_status.get("driver_mode") == "enttec_open" and not driver_diag.get("connected"):
+        if hw_status.get("driver_mode") == "enttec_open" and not is_hw_connected:
             # Check if port changed or can be auto-recovered
             candidate_ports = telemetry["serial_devices"]["by_id"] or telemetry["serial_devices"]["tty_usb"]
             if candidate_ports:
@@ -224,9 +225,17 @@ Provide a structured JSON diagnosis with the following keys:
             except Exception as e:
                 ai_analysis = {"error": f"Gemini consultation failed: {str(e)}"}
 
-        overall_status = "HEALTHY"
-        if detected_issues:
-            overall_status = "CRITICAL" if any("failed" in i or "crashed" in i for i in detected_issues) else "DEGRADED"
+        critical_issues = [
+            i for i in detected_issues if ("failed" in i.lower() or "crashed" in i.lower() or "integrity" in i.lower())
+        ]
+        if critical_issues:
+            overall_status = "CRITICAL"
+        elif not is_hw_connected:
+            overall_status = "DISCONNECTED"
+        elif detected_issues:
+            overall_status = "DEGRADED"
+        else:
+            overall_status = "HEALTHY"
 
         # Record to Health Logs
         if detected_issues or auto_actions_taken:

@@ -17,7 +17,7 @@ class TestAIDoctorSelfHealing(unittest.TestCase):
     def test_diagnose_and_heal_returns_status(self):
         result = self.doctor.diagnose_and_heal()
         self.assertIn("status", result)
-        self.assertIn(result["status"], ["HEALTHY", "DEGRADED", "CRITICAL"])
+        self.assertIn(result["status"], ["HEALTHY", "DEGRADED", "CRITICAL", "DISCONNECTED"])
         self.assertIn("telemetry", result)
         self.assertIsInstance(result["issues"], list)
         self.assertIsInstance(result["auto_actions_taken"], list)

@@ -126,13 +126,17 @@ function updateHeaderHardwareStatus(hw) {
   const dot = badgeEl ? badgeEl.querySelector(".indicator-dot") : null;
 
   if (nameEl && fpsEl) {
-    const isVirtual = hw.driver_mode === "virtual";
-    nameEl.textContent = isVirtual ? "Virtual DMX" : "Enttec Open DMX";
-    fpsEl.textContent = `${hw.actual_fps.toFixed(1)} FPS`;
-
-    if (dot) {
-      const isConnected = hw.driver_diagnostics && hw.driver_diagnostics.connected;
-      dot.className = "indicator-dot " + (isConnected ? "dot-green" : isVirtual ? "dot-yellow" : "dot-red");
+    const isHwConnected = Boolean(hw.hardware_connected);
+    if (isHwConnected) {
+      nameEl.textContent = "Enttec Open DMX";
+      fpsEl.textContent = `${hw.actual_fps.toFixed(1)} FPS`;
+      if (dot) dot.className = "indicator-dot dot-green";
+      if (badgeEl) badgeEl.title = "Enttec Open DMX USB Connected";
+    } else {
+      nameEl.textContent = "Virtual DMX (Offline)";
+      fpsEl.textContent = `${hw.actual_fps.toFixed(1)} FPS`;
+      if (dot) dot.className = "indicator-dot dot-yellow";
+      if (badgeEl) badgeEl.title = "Simulation Mode (No physical DMX interface connected)";
     }
   }
 }
