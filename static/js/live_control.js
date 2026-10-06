@@ -26,10 +26,25 @@ document.addEventListener("DOMContentLoaded", () => {
   // Grand Master & Tempo Elements
   const grandMasterSlider = document.getElementById("grand-master-slider");
   const grandMasterPct = document.getElementById("grand-master-pct");
+  const headerGmPct = document.getElementById("header-grand-master-pct");
+  const faderFill = document.getElementById("fader-fill");
+  const faderTrack = document.getElementById("fader-track");
+  const btnMasterFull = document.getElementById("btn-master-full");
+  const btnMasterZero = document.getElementById("btn-master-zero");
+
   const scriptSpeedSlider = document.getElementById("script-speed-slider");
   const scriptSpeedPct = document.getElementById("script-speed-pct");
   const btnTapTempo = document.getElementById("btn-tap-tempo");
   const tapTempoBpm = document.getElementById("tap-tempo-bpm");
+
+  // View Switcher Elements
+  const liveGrid = document.getElementById("live-grid");
+  const viewBtnSplit = document.getElementById("view-btn-split");
+  const viewBtnPresets = document.getElementById("view-btn-presets");
+  const viewBtnScripts = document.getElementById("view-btn-scripts");
+  const viewModeHint = document.getElementById("view-mode-hint");
+  const btnTogglePresetsFullscreen = document.getElementById("btn-toggle-presets-fullscreen");
+  const btnToggleScriptsFullscreen = document.getElementById("btn-toggle-scripts-fullscreen");
 
   // Build Partition Matrix Grid (512 blocks)
   buildPartitionMatrix();
@@ -39,28 +54,105 @@ document.addEventListener("DOMContentLoaded", () => {
   loadScripts();
   initGrandMaster();
   initSpeedAndTapTempo();
+  initLiveViewModes();
 
   // -------------------------------------------------------
-  // Grand Master Intensity Fader
+  // View Modes: Split View vs Fullscreen Presets vs Scripts
+  // (Zero network traffic / zero DMX commands triggered)
+  // -------------------------------------------------------
+  function initLiveViewModes() {
+    if (!liveGrid) return;
+
+    // Restore saved view mode preference
+    const savedMode = localStorage.getItem("dmx_live_view_mode") || "split";
+    applyLiveViewMode(savedMode, false);
+
+    if (viewBtnSplit) {
+      viewBtnSplit.addEventListener("click", () => applyLiveViewMode("split", true));
+    }
+    if (viewBtnPresets) {
+      viewBtnPresets.addEventListener("click", () => applyLiveViewMode("presets", true));
+    }
+    if (viewBtnScripts) {
+      viewBtnScripts.addEventListener("click", () => applyLiveViewMode("scripts", true));
+    }
+
+    if (btnTogglePresetsFullscreen) {
+      btnTogglePresetsFullscreen.addEventListener("click", () => {
+        const isAlreadyPresetsOnly = liveGrid.classList.contains("view-presets-only");
+        applyLiveViewMode(isAlreadyPresetsOnly ? "split" : "presets", true);
+      });
+    }
+
+    if (btnToggleScriptsFullscreen) {
+      btnToggleScriptsFullscreen.addEventListener("click", () => {
+        const isAlreadyScriptsOnly = liveGrid.classList.contains("view-scripts-only");
+        applyLiveViewMode(isAlreadyScriptsOnly ? "split" : "scripts", true);
+      });
+    }
+  }
+
+  function applyLiveViewMode(mode, save = true) {
+    if (!liveGrid) return;
+
+    [viewBtnSplit, viewBtnPresets, viewBtnScripts].forEach((b) => b && b.classList.remove("active"));
+    liveGrid.classList.remove("view-presets-only", "view-scripts-only");
+
+    if (mode === "presets") {
+      liveGrid.classList.add("view-presets-only");
+      if (viewBtnPresets) viewBtnPresets.classList.add("active");
+      if (btnTogglePresetsFullscreen) btnTogglePresetsFullscreen.textContent = "⤺ Split View";
+      if (btnToggleScriptsFullscreen) btnToggleScriptsFullscreen.textContent = "⛶ Fullscreen";
+      if (viewModeHint) viewModeHint.innerHTML = "<span>Presets Fullscreen Mode (Master fader on right)</span>";
+    } else if (mode === "scripts") {
+      liveGrid.classList.add("view-scripts-only");
+      if (viewBtnScripts) viewBtnScripts.classList.add("active");
+      if (btnToggleScriptsFullscreen) btnToggleScriptsFullscreen.textContent = "⤺ Split View";
+      if (btnTogglePresetsFullscreen) btnTogglePresetsFullscreen.textContent = "⛶ Fullscreen";
+      if (viewModeHint) viewModeHint.innerHTML = "<span>Scripts Fullscreen Mode (Master fader on right)</span>";
+    } else {
+      mode = "split";
+      if (viewBtnSplit) viewBtnSplit.classList.add("active");
+      if (btnTogglePresetsFullscreen) btnTogglePresetsFullscreen.textContent = "⛶ Fullscreen";
+      if (btnToggleScriptsFullscreen) btnToggleScriptsFullscreen.textContent = "⛶ Fullscreen";
+      if (viewModeHint) viewModeHint.innerHTML = "<span>Showing Presets & Scripts side-by-side</span>";
+    }
+
+    if (save) {
+      try {
+        localStorage.setItem("dmx_live_view_mode", mode);
+      } catch (e) {}
+    }
+  }
+
+  // -------------------------------------------------------
+  // Full-Length Vertical Grand Master Fader (Right-Hand Side)
   // -------------------------------------------------------
   let gmDebounceTimer = null;
+  let isDraggingFader = false;
+
   function initGrandMaster() {
     if (!grandMasterSlider) return;
 
-    // Fetch initial level
+    // Fetch initial level from server
     API.get("/api/master/grand_master")
       .then((data) => {
         if (data && data.percent !== undefined) {
-          grandMasterSlider.value = data.percent;
-          if (grandMasterPct) grandMasterPct.textContent = `${data.percent}%`;
+          updateGrandMasterUI(data.percent);
         }
       })
       .catch((err) => console.error("Could not fetch grand master:", err));
 
-    grandMasterSlider.addEventListener("input", (e) => {
-      const pct = parseInt(e.target.value, 10);
-      if (grandMasterPct) grandMasterPct.textContent = `${pct}%`;
+    function updateGrandMasterUI(pct) {
+      const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+      if (grandMasterSlider) grandMasterSlider.value = clamped;
+      if (grandMasterPct) grandMasterPct.textContent = `${clamped}%`;
+      if (headerGmPct) headerGmPct.textContent = `${clamped}%`;
+      if (faderFill) faderFill.style.height = `${clamped}%`;
+    }
 
+    function commitGrandMaster(pct) {
+      updateGrandMasterUI(pct);
       clearTimeout(gmDebounceTimer);
       gmDebounceTimer = setTimeout(async () => {
         try {
@@ -69,6 +161,68 @@ document.addEventListener("DOMContentLoaded", () => {
           console.error("Failed to set grand master:", err);
         }
       }, 30);
+    }
+
+    // Native vertical range slider input event
+    grandMasterSlider.addEventListener("input", (e) => {
+      commitGrandMaster(parseInt(e.target.value, 10));
+    });
+
+    // Touch & Pointer drag on the fader track (ergonomic for iPad)
+    if (faderTrack) {
+      function calculatePctFromPointer(e) {
+        const rect = faderTrack.getBoundingClientRect();
+        const relativeY = e.clientY - rect.top;
+        const normalized = 1 - (relativeY / rect.height);
+        return Math.max(0, Math.min(100, Math.round(normalized * 100)));
+      }
+
+      faderTrack.addEventListener("pointerdown", (e) => {
+        isDraggingFader = true;
+        try {
+          faderTrack.setPointerCapture(e.pointerId);
+        } catch (err) {}
+        commitGrandMaster(calculatePctFromPointer(e));
+      });
+
+      faderTrack.addEventListener("pointermove", (e) => {
+        if (isDraggingFader) {
+          commitGrandMaster(calculatePctFromPointer(e));
+        }
+      });
+
+      const stopDrag = (e) => {
+        if (isDraggingFader) {
+          isDraggingFader = false;
+          try {
+            faderTrack.releasePointerCapture(e.pointerId);
+          } catch (err) {}
+        }
+      };
+
+      faderTrack.addEventListener("pointerup", stopDrag);
+      faderTrack.addEventListener("pointercancel", stopDrag);
+    }
+
+    // Snap buttons (FULL & ZERO)
+    if (btnMasterFull) {
+      btnMasterFull.addEventListener("click", () => commitGrandMaster(100));
+    }
+    if (btnMasterZero) {
+      btnMasterZero.addEventListener("click", () => commitGrandMaster(0));
+    }
+
+    // Sync from live WebSocket updates if user is not actively touching the fader
+    window.addEventListener("universe-update", (e) => {
+      if (isDraggingFader) return;
+      const data = e.detail;
+      if (data && data.grand_master !== undefined) {
+        const pct = Math.round(data.grand_master * 100);
+        // Only update if difference is meaningful to prevent slider flicker
+        if (Math.abs(parseInt(grandMasterSlider.value, 10) - pct) > 1) {
+          updateGrandMasterUI(pct);
+        }
+      }
     });
   }
 

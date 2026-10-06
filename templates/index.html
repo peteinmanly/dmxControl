@@ -29,12 +29,11 @@
     </div>
 
     <div class="header-right">
-      <!-- Grand Master Intensity Fader -->
-      <div class="grand-master-pill" title="Grand Master Intensity Scaling (0-100%)">
+      <!-- Grand Master Level Readout Pill -->
+      <div class="grand-master-pill" id="header-gm-pill" title="Grand Master Level">
         <span class="gm-icon">🎚️</span>
-        <label for="grand-master-slider" class="gm-title">MASTER</label>
-        <input type="range" id="grand-master-slider" min="0" max="100" value="100" step="1" aria-label="Grand Master">
-        <span class="gm-pct" id="grand-master-pct">100%</span>
+        <span class="gm-title">GM:</span>
+        <span class="gm-pct" id="header-grand-master-pct">100%</span>
       </div>
 
       <!-- Hardware Status Badge -->
@@ -78,72 +77,133 @@
 
     <!-- TAB 1: LIVE CONTROL -->
     <section class="tab-pane active" id="live-tab">
-      <div class="live-grid">
-        <!-- Presets Column -->
-        <div class="panel">
-          <div class="panel-header">
-            <div>
-              <h2>Static Presets</h2>
-              <span class="subtext">Instant or smooth crossfades</span>
+      <div class="live-workspace-wrapper">
+
+        <!-- Main Busking Area (View Switcher, Panels, Partition Matrix) -->
+        <div class="live-main-content">
+          <!-- View Switcher Toolbar -->
+          <div class="live-view-toolbar">
+            <div class="view-switch-group">
+              <button type="button" class="view-btn active" data-view="split" id="view-btn-split" title="Side-by-side view">
+                🔲 Split View
+              </button>
+              <button type="button" class="view-btn" data-view="presets" id="view-btn-presets" title="Fullscreen: Presets only (tablet busking)">
+                🎨 Presets Only
+              </button>
+              <button type="button" class="view-btn" data-view="scripts" id="view-btn-scripts" title="Fullscreen: Scripts only (looping routines)">
+                ⚡ Scripts Only
+              </button>
             </div>
-            <div class="panel-actions">
-              <div class="preset-fade-selector" title="Crossfade transition time for presets">
-                <label for="preset-fade-select">Fade:</label>
-                <select id="preset-fade-select" class="select-compact">
-                  <option value="0">Cut (0s)</option>
-                  <option value="1">1.0s</option>
-                  <option value="2" selected>2.0s</option>
-                  <option value="3">3.0s</option>
-                  <option value="5">5.0s</option>
-                </select>
-              </div>
-              <button class="btn btn-sm btn-primary" id="btn-new-preset">+ New Preset</button>
+            <div class="toolbar-hint" id="view-mode-hint">
+              <span>Showing Presets & Scripts side-by-side</span>
             </div>
           </div>
-          <div class="preset-grid" id="preset-grid">
-            <!-- Dynamically populated preset tiles -->
+
+          <div class="live-grid" id="live-grid">
+            <!-- Presets Column -->
+            <div class="panel" id="panel-presets">
+              <div class="panel-header">
+                <div>
+                  <h2>Static Presets</h2>
+                  <span class="subtext">Instant or smooth crossfades</span>
+                </div>
+                <div class="panel-actions">
+                  <div class="preset-fade-selector" title="Crossfade transition time for presets">
+                    <label for="preset-fade-select">Fade:</label>
+                    <select id="preset-fade-select" class="select-compact">
+                      <option value="0">Cut (0s)</option>
+                      <option value="1">1.0s</option>
+                      <option value="2" selected>2.0s</option>
+                      <option value="3">3.0s</option>
+                      <option value="5">5.0s</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-outline btn-toggle-expand" id="btn-toggle-presets-fullscreen" title="Toggle Fullscreen for Presets">
+                    ⛶ Fullscreen
+                  </button>
+                  <button class="btn btn-sm btn-primary" id="btn-new-preset">+ New Preset</button>
+                </div>
+              </div>
+              <div class="preset-grid" id="preset-grid">
+                <!-- Dynamically populated preset tiles -->
+              </div>
+            </div>
+
+            <!-- Active Procedural Show Scripts Column -->
+            <div class="panel" id="panel-scripts">
+              <div class="panel-header">
+                <div>
+                  <h2>Show Scripts</h2>
+                  <span class="subtext">Procedural & looping FX</span>
+                </div>
+                <div class="panel-actions">
+                  <div class="script-tempo-bar" title="Real-time procedural script speed & tempo sync">
+                    <span class="tempo-label">Speed:</span>
+                    <input type="range" id="script-speed-slider" min="0.25" max="4.0" step="0.05" value="1.0" class="speed-slider" aria-label="Speed Multiplier">
+                    <span id="script-speed-pct" class="speed-display">1.00x</span>
+                    <button type="button" class="btn-tap-tempo" id="btn-tap-tempo" title="Tap rhythmically to sync tempo">
+                      🥁 TAP
+                    </button>
+                    <span id="tap-tempo-bpm" class="bpm-display">120 BPM</span>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-outline btn-toggle-expand" id="btn-toggle-scripts-fullscreen" title="Toggle Fullscreen for Scripts">
+                    ⛶ Fullscreen
+                  </button>
+                  <button class="btn btn-sm btn-ai" id="btn-open-ai-show-modal">✨ AI Show Generator</button>
+                </div>
+              </div>
+              <div class="script-grid" id="script-grid">
+                <!-- Dynamically populated script tiles -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Channel Partition & Ownership Matrix -->
+          <div class="panel matrix-panel" id="panel-matrix">
+            <div class="panel-header">
+              <h2>Channel Partition Matrix (512-Channel Allocation)</h2>
+              <div class="legend">
+                <span class="legend-item"><span class="color-swatch swatch-free"></span> Free</span>
+                <span class="legend-item"><span class="color-swatch swatch-preset"></span> Preset Owned</span>
+                <span class="legend-item"><span class="color-swatch swatch-script"></span> Script Locked</span>
+              </div>
+            </div>
+            <div class="matrix-strip" id="partition-matrix">
+              <!-- 512 tiny color blocks representing ownership -->
+            </div>
           </div>
         </div>
 
-        <!-- Active Procedural Show Scripts Column -->
-        <div class="panel">
-          <div class="panel-header">
-            <div>
-              <h2>Show Scripts</h2>
-              <span class="subtext">Procedural & looping FX</span>
-            </div>
-            <div class="panel-actions">
-              <div class="script-tempo-bar" title="Real-time procedural script speed & tempo sync">
-                <span class="tempo-label">Speed:</span>
-                <input type="range" id="script-speed-slider" min="0.25" max="4.0" step="0.05" value="1.0" class="speed-slider" aria-label="Speed Multiplier">
-                <span id="script-speed-pct" class="speed-display">1.00x</span>
-                <button type="button" class="btn-tap-tempo" id="btn-tap-tempo" title="Tap rhythmically to sync tempo">
-                  🥁 TAP
-                </button>
-                <span id="tap-tempo-bpm" class="bpm-display">120 BPM</span>
-              </div>
-              <button class="btn btn-sm btn-ai" id="btn-open-ai-show-modal">✨ AI Show Generator</button>
-            </div>
+        <!-- Full-Length Vertical Grand Master Strip (Right-Hand Side) -->
+        <aside class="master-fader-strip" id="master-fader-strip" title="Grand Master Intensity Fader">
+          <div class="fader-header">
+            <span class="fader-title">MASTER</span>
+            <span class="fader-pct" id="grand-master-pct">100%</span>
           </div>
-          <div class="script-grid" id="script-grid">
-            <!-- Dynamically populated script tiles -->
-          </div>
-        </div>
-      </div>
 
-      <!-- Channel Partition & Ownership Matrix -->
-      <div class="panel matrix-panel">
-        <div class="panel-header">
-          <h2>Channel Partition Matrix (512-Channel Allocation)</h2>
-          <div class="legend">
-            <span class="legend-item"><span class="color-swatch swatch-free"></span> Free</span>
-            <span class="legend-item"><span class="color-swatch swatch-preset"></span> Preset Owned</span>
-            <span class="legend-item"><span class="color-swatch swatch-script"></span> Script Locked</span>
+          <button type="button" class="btn-fader-snap btn-fader-full" id="btn-master-full" title="Snap Master to 100%">
+            FULL
+          </button>
+
+          <div class="fader-track-container" id="fader-track-container">
+            <div class="fader-scale">
+              <span>100</span>
+              <span>75</span>
+              <span>50</span>
+              <span>25</span>
+              <span>0</span>
+            </div>
+            <div class="fader-track" id="fader-track" title="Slide or tap to adjust master brightness">
+              <div class="fader-fill" id="fader-fill" style="height: 100%;"></div>
+              <input type="range" id="grand-master-slider" orient="vertical" min="0" max="100" value="100" step="1" class="vertical-slider" aria-label="Grand Master Vertical Fader">
+            </div>
           </div>
-        </div>
-        <div class="matrix-strip" id="partition-matrix">
-          <!-- 512 tiny color blocks representing ownership -->
-        </div>
+
+          <button type="button" class="btn-fader-snap btn-fader-zero" id="btn-master-zero" title="Snap Master to 0%">
+            ZERO
+          </button>
+        </aside>
+
       </div>
     </section>
 
