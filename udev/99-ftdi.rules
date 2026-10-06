@@ -1,0 +1,13 @@
+# Linux udev rules for FTDI FT232R USB-to-Serial / Enttec Open DMX USB
+# Grants read/write permissions to users in the 'dialout' group without needing root/sudo.
+#
+# Installation:
+#   sudo cp 99-ftdi.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+
+# FTDI FT232R USB UART (Vendor 0403, Product 6001)
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE="0666", GROUP="dialout"
+KERNEL=="ttyUSB*", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE="0666", GROUP="dialout"
+
+# Enttec Open DMX USB Generic Identifier Match
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE="0666", GROUP="dialout", SYMLINK+="enttec_open_dmx"

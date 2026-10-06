@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-Assisted DMX Web Controller</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Global Top Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo">
+        <span class="logo-icon">💡</span>
+        <div class="logo-text">
+          <h1>DMX Controller</h1>
+          <span class="subtext">AI-Assisted Linux Mint & Enttec Open DMX Edition</span>
+        </div>
+      </div>
+      <nav class="nav-tabs">
+        <button class="tab-btn active" data-tab="live-tab">Live Control</button>
+        <button class="tab-btn" data-tab="fixtures-tab">Fixtures & Patch</button>
+        <button class="tab-btn" data-tab="settings-tab">Settings & Diagnostics</button>
+      </nav>
+    </div>
+
+    <div class="header-right">
+      <!-- Hardware Status Badge -->
+      <div class="status-pill" id="hw-status-badge" title="DMX Hardware Driver Status">
+        <span class="indicator-dot dot-yellow"></span>
+        <span id="hw-driver-name">Enttec Open DMX</span>: <span id="hw-fps">0.0 FPS</span>
+      </div>
+
+      <!-- AI Doctor Health Badge -->
+      <button class="health-btn" id="health-status-badge" title="Click to view AI Doctor Health Diagnostics">
+        <span class="indicator-dot dot-green"></span>
+        <span id="health-status-text">HEALTHY</span>
+      </button>
+
+      <!-- Panic Buttons -->
+      <div class="panic-group">
+        <button class="panic-btn blackout-btn" id="btn-master-blackout" title="Emergency Blackout (All 512 channels to 0 and halt scripts)">
+          ⚠️ BLACKOUT
+        </button>
+        <button class="panic-btn kill-btn" id="btn-kill-effects" title="Stop all running script threads, holding current levels">
+          ⏹️ KILL EFFECTS
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- AI Doctor Health Alert Banner (Appears when issues are detected) -->
+  <div class="health-banner hidden" id="health-banner">
+    <div class="banner-content">
+      <span class="banner-icon">🩺</span>
+      <span class="banner-message" id="health-banner-text">Issue detected with DMX hardware or system permissions.</span>
+    </div>
+    <div class="banner-actions">
+      <button class="btn btn-sm btn-outline" id="btn-open-doctor-modal">Open AI Doctor</button>
+      <button class="btn btn-sm btn-ghost" id="btn-dismiss-banner">Dismiss</button>
+    </div>
+  </div>
+
+  <!-- Main Workspace Content -->
+  <main class="main-container">
+
+    <!-- TAB 1: LIVE CONTROL -->
+    <section class="tab-pane active" id="live-tab">
+      <div class="live-grid">
+        <!-- Presets Column -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Static Presets</h2>
+            <div class="panel-actions">
+              <button class="btn btn-sm btn-primary" id="btn-new-preset">+ New Preset</button>
+            </div>
+          </div>
+          <div class="preset-grid" id="preset-grid">
+            <!-- Dynamically populated preset tiles -->
+          </div>
+        </div>
+
+        <!-- Active Procedural Show Scripts Column -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Show Scripts (Procedural Routines)</h2>
+            <div class="panel-actions">
+              <button class="btn btn-sm btn-ai" id="btn-open-ai-show-modal">✨ AI Show Generator</button>
+            </div>
+          </div>
+          <div class="script-grid" id="script-grid">
+            <!-- Dynamically populated script tiles -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Channel Partition & Ownership Matrix -->
+      <div class="panel matrix-panel">
+        <div class="panel-header">
+          <h2>Channel Partition Matrix (512-Channel Allocation)</h2>
+          <div class="legend">
+            <span class="legend-item"><span class="color-swatch swatch-free"></span> Free</span>
+            <span class="legend-item"><span class="color-swatch swatch-preset"></span> Preset Owned</span>
+            <span class="legend-item"><span class="color-swatch swatch-script"></span> Script Locked</span>
+          </div>
+        </div>
+        <div class="matrix-strip" id="partition-matrix">
+          <!-- 512 tiny color blocks representing ownership -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: FIXTURES & PATCH -->
+    <section class="tab-pane" id="fixtures-tab">
+      <div class="panel">
+        <div class="panel-header">
+          <h2>Patched Fixtures (DMX Universe 1)</h2>
+          <div class="panel-actions">
+            <button class="btn btn-sm btn-outline" id="btn-add-fixture-manual">+ Add Fixture</button>
+            <button class="btn btn-sm btn-ai" id="btn-open-wizard-modal">✨ Configure with AI Wizard</button>
+          </div>
+        </div>
+        <div class="fixture-list" id="fixture-list">
+          <!-- Dynamically populated fixture cards -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: SETTINGS & DIAGNOSTICS -->
+    <section class="tab-pane" id="settings-tab">
+      <div class="settings-layout">
+        <!-- Settings Column -->
+        <div class="settings-column">
+          <!-- Gemini AI Configuration -->
+          <div class="card">
+            <h3>🤖 Gemini AI Engine</h3>
+            <div class="form-group">
+              <label for="setting-gemini-key">Google Gemini API Key</label>
+              <div class="input-with-toggle">
+                <input type="password" id="setting-gemini-key" placeholder="AIzaSy...">
+                <button type="button" class="btn btn-sm btn-ghost" id="btn-toggle-key-vis">Show</button>
+              </div>
+              <span class="hint-text">Used for reverse-engineering generic fixtures, safe show generation, and self-healing diagnostics.</span>
+            </div>
+            <div class="form-group">
+              <label for="setting-gemini-model">Gemini Model</label>
+              <select id="setting-gemini-model">
+                <option value="gemini-3.8-flash">gemini-3.8-flash (Recommended - Fast & Agentic)</option>
+                <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (Ultra-fast)</option>
+                <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview (Complex Reasoning)</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="btn-save-gemini">Save Gemini Settings</button>
+          </div>
+
+          <!-- Hardware Connection Settings -->
+          <div class="card">
+            <h3>🔌 Hardware Interface</h3>
+            <div class="form-group">
+              <label for="setting-driver">DMX Protocol Driver</label>
+              <select id="setting-driver">
+                <option value="enttec_open">Enttec Open DMX USB (FTDI Serial - Primary Target)</option>
+                <option value="virtual">Virtual / Dummy DMX (Simulation & Offline Testing)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="setting-serial-port">Serial Port (Linux Mint /dev/ttyUSB*)</label>
+              <input type="text" id="setting-serial-port" value="/dev/ttyUSB0">
+              <span class="hint-text">Auto-detects /dev/serial/by-id/usb-ENTTEC* or /dev/ttyUSB0 on Linux Mint.</span>
+            </div>
+            <div class="form-group">
+              <label for="setting-fps">Refresh Rate: <span id="fps-label">40</span> Hz</label>
+              <input type="range" id="setting-fps" min="20" max="44" value="40" step="1">
+            </div>
+            <button class="btn btn-primary" id="btn-save-hardware">Apply Hardware Settings</button>
+          </div>
+
+          <!-- Database Curation -->
+          <div class="card">
+            <h3>🗄️ Database & Storage</h3>
+            <p class="card-desc">Zero-configuration embedded SQLite store: <code>data/dmx_controller.db</code></p>
+            <div class="btn-group">
+              <a href="/api/settings/backup" class="btn btn-outline" download>📥 Export JSON Backup</a>
+              <button class="btn btn-danger" id="btn-reset-db">Reset Factory Defaults</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terminal Diagnostic Assistant Column -->
+        <div class="settings-column">
+          <div class="card troubleshooter-card">
+            <div class="troubleshooter-header">
+              <h3>💻 Interactive AI Terminal Troubleshooter</h3>
+              <span class="badge badge-ai">Gemini Assisted</span>
+            </div>
+            <p class="card-desc">
+              Something not working? Describe the problem and the AI will give you a safe Linux Mint terminal command to run. Paste the output back here to troubleshoot together!
+            </p>
+
+            <!-- Quick Diagnostic Pills -->
+            <div class="quick-recipes-label">Quick Diagnostic Recipes:</div>
+            <div class="recipe-pills" id="recipe-pills">
+              <button class="pill" data-recipe="audit_usb">🔍 Audit USB & Drivers</button>
+              <button class="pill" data-recipe="check_permissions">👤 Check dialout Permissions</button>
+              <button class="pill" data-recipe="check_conflicts">🚫 Check brltty Conflicts</button>
+              <button class="pill" data-recipe="check_latency_and_logs">⏱️ Check Latency & Logs</button>
+            </div>
+
+            <!-- Problem Description Box -->
+            <div class="form-group">
+              <label for="troubleshoot-issue">Describe your problem:</label>
+              <textarea id="troubleshoot-issue" rows="2" placeholder="e.g. My Enttec box LED is flashing green but fixtures don't react..."></textarea>
+            </div>
+            <button class="btn btn-outline" id="btn-generate-command">⚡ Generate Terminal Command</button>
+
+            <!-- Generated Command Box -->
+            <div class="command-box-wrapper hidden" id="cmd-box-wrapper">
+              <label>Run this command in your Linux Mint terminal:</label>
+              <div class="code-box">
+                <code id="generated-command">lsusb</code>
+                <button class="btn btn-sm btn-ghost" id="btn-copy-command" title="Copy to clipboard">📋 Copy</button>
+              </div>
+              <p class="command-explanation" id="command-explanation"></p>
+            </div>
+
+            <!-- Terminal Output Paste Box -->
+            <div class="form-group">
+              <label for="terminal-output">Paste Terminal Output Here:</label>
+              <textarea id="terminal-output" rows="4" placeholder="Paste the output from your terminal here..."></textarea>
+            </div>
+            <button class="btn btn-ai" id="btn-analyze-output">🩺 Analyze Terminal Output</button>
+
+            <!-- AI Solution Result Box -->
+            <div class="solution-box hidden" id="solution-box">
+              <div class="solution-title">Diagnosis & Recommended Remediation:</div>
+              <div class="solution-diagnosis" id="solution-diagnosis"></div>
+              <div class="remediation-commands-list" id="remediation-commands-list"></div>
+              <div class="verification-step" id="verification-step"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time 512-Channel Universe Diagnostics Grid -->
+      <div class="panel diagnostics-panel">
+        <div class="panel-header">
+          <h2>Real-Time Universe Diagnostics (512 Channels)</h2>
+          <div class="stats">
+            <span>Non-Zero: <strong id="stat-nonzero">0</strong>/512</span>
+            <span>Locked: <strong id="stat-locked">0</strong>/512</span>
+          </div>
+        </div>
+        <div class="universe-grid" id="universe-channels-grid">
+          <!-- 512 channel level bars -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODALS -->
+
+  <!-- Modal: AI Doctor Diagnostics & Healing -->
+  <div class="modal-overlay hidden" id="modal-doctor">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>🩺 AI Doctor System Diagnostics</h3>
+        <button class="modal-close" data-close="modal-doctor">&times;</button>
+      </div>
+      <div class="modal-body" id="doctor-modal-body">
+        <div class="loading-spinner">Scanning system health...</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="btn-rerun-diagnostics">Re-run Scan</button>
+        <button class="btn btn-primary" data-close="modal-doctor">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: AI Show Generator -->
+  <div class="modal-overlay hidden" id="modal-ai-show">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3>✨ AI Show Script Generator</h3>
+        <button class="modal-close" data-close="modal-ai-show">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-intro">Describe the lighting effect you desire. Gemini will craft and AST-validate procedural Python code for your patched fixtures.</p>
+        <div class="form-group">
+          <label for="ai-show-prompt">Prompt:</label>
+          <textarea id="ai-show-prompt" rows="3" placeholder="e.g. Create a pulsating warm amber breathing wave across front wash fixtures with occasional random blue strobe flashes"></textarea>
+        </div>
+        <button class="btn btn-ai" id="btn-submit-ai-show">Generate Show Script</button>
+
+        <div class="ai-show-result hidden" id="ai-show-result">
+          <div class="form-group">
+            <label>Title:</label>
+            <input type="text" id="ai-show-title">
+          </div>
+          <div class="form-group">
+            <label>Description:</label>
+            <input type="text" id="ai-show-desc">
+          </div>
+          <div class="form-group">
+            <label>Footprint Channels:</label>
+            <input type="text" id="ai-show-footprint">
+          </div>
+          <div class="form-group">
+            <label>Python Code (AST-Validated):</label>
+            <textarea id="ai-show-code" rows="8"></textarea>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-outline" id="btn-test-ai-show">Live Test</button>
+            <button class="btn btn-primary" id="btn-save-ai-show">Save to Dashboard</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Fixture Wizard (Path A & Path B) -->
+  <div class="modal-overlay hidden" id="modal-fixture-wizard">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3>✨ Configure Fixture with AI Wizard</h3>
+        <button class="modal-close" data-close="modal-fixture-wizard">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="wizard-mode-selector">
+          <button class="mode-tab active" id="tab-wizard-probe">Path B: Interactive Channel Probing (Generic Fixtures)</button>
+          <button class="mode-tab" id="tab-wizard-doc">Path A: Documentation / Spec Lookup</button>
+        </div>
+
+        <!-- Path B: Interactive Probing Form & State Machine -->
+        <div class="wizard-pane active" id="pane-wizard-probe">
+          <div id="probe-setup-step">
+            <p>For unbranded or generic fixtures. The wizard will iterate through DMX channels, fire physical lighting signals, and deduce your channel map based on what you see.</p>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="probe-fix-name">Fixture Name</label>
+                <input type="text" id="probe-fix-name" value="Generic LED Par">
+              </div>
+              <div class="form-group">
+                <label for="probe-start-ch">Starting DMX Channel (1-512)</label>
+                <input type="number" id="probe-start-ch" value="1" min="1" max="512">
+              </div>
+              <div class="form-group">
+                <label for="probe-ch-count">Estimated Channels (e.g. 4, 7, 16)</label>
+                <input type="number" id="probe-ch-count" value="4" min="1" max="64">
+              </div>
+            </div>
+            <button class="btn btn-ai" id="btn-start-probe">Begin Interactive Probing</button>
+          </div>
+
+          <div id="probe-active-step" class="hidden">
+            <div class="probe-question-box">
+              <div class="step-badge" id="probe-step-badge">Step 1</div>
+              <h4 id="probe-question-text">Testing Channel...</h4>
+              <p class="probe-action-subtext" id="probe-action-text"></p>
+            </div>
+            <div class="form-group">
+              <label for="probe-user-feedback">What physical reaction do you observe?</label>
+              <input type="text" id="probe-user-feedback" placeholder="e.g. Turned red, pan moved, strobe flashed, or no light">
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary" id="btn-submit-probe-step">Submit Observation</button>
+              <button class="btn btn-outline" id="btn-finalize-probe">Finalize Profile Now</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Path A: Documentation Lookup -->
+        <div class="wizard-pane hidden" id="pane-wizard-doc">
+          <p>Paste user manual text, dipswitch chart, or DMX channel tables. Gemini will parse it directly into a patched fixture.</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="doc-fix-name">Fixture Name / Model</label>
+              <input type="text" id="doc-fix-name" placeholder="Chauvet SlimPAR Pro H">
+            </div>
+            <div class="form-group">
+              <label for="doc-fix-mfg">Manufacturer</label>
+              <input type="text" id="doc-fix-mfg" placeholder="Chauvet">
+            </div>
+            <div class="form-group">
+              <label for="doc-start-ch">Start DMX Address</label>
+              <input type="number" id="doc-start-ch" value="1" min="1" max="512">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="doc-spec-text">Specification / DMX Manual Text:</label>
+            <textarea id="doc-spec-text" rows="5" placeholder="CH1: Master Dimmer (0-255)&#10;CH2: Red (0-255)&#10;CH3: Green (0-255)..."></textarea>
+          </div>
+          <button class="btn btn-ai" id="btn-submit-doc-lookup">Parse and Patch Fixture</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Manual Add Fixture -->
+  <div class="modal-overlay hidden" id="modal-add-fixture">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Fixture Manually</h3>
+        <button class="modal-close" data-close="modal-add-fixture">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="man-fix-name">Name</label>
+          <input type="text" id="man-fix-name" placeholder="Front Stage Left">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="man-fix-start">Start Channel</label>
+            <input type="number" id="man-fix-start" value="1" min="1" max="512">
+          </div>
+          <div class="form-group">
+            <label for="man-fix-count">Channel Count</label>
+            <input type="number" id="man-fix-count" value="4" min="1" max="64">
+          </div>
+          <div class="form-group">
+            <label for="man-fix-group">Group Tag</label>
+            <input type="text" id="man-fix-group" value="front_wash">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Channels Definition (comma-separated types):</label>
+          <input type="text" id="man-fix-channels" value="red, green, blue, white" placeholder="e.g. dimmer, red, green, blue">
+          <span class="hint-text">Types: dimmer, red, green, blue, white, amber, uv, pan, tilt, strobe</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" data-close="modal-add-fixture">Cancel</button>
+        <button class="btn btn-primary" id="btn-save-manual-fixture">Save Fixture</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/doctor.js"></script>
+  <script src="/static/js/troubleshooter.js"></script>
+  <script src="/static/js/live_control.js"></script>
+  <script src="/static/js/fixtures.js"></script>
+  <script src="/static/js/settings.js"></script>
+</body>
+</html>
